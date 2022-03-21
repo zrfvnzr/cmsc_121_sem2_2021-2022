@@ -1,13 +1,23 @@
+<!-- https://github.com/zrfvnzr/cmsc_121_sem2_2021-2022/tree/main/MP1%20-%20Calculator -->
+
 <!DOCTYPE html>
 <html>
 <head>
 <style>
+    /* arranged by elements, classes, then ids. then alphabetically. */
     * {
         box-sizing: border-box;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+    body {
+        background-color: lightblue;
     }
     .button {
         align-items: center;
-        border: 1px solid gray;
+        background-color: white;
+        border: 2px solid black;
+        border-radius: 5px;
+        cursor: pointer;
         display: flex;
         height: 50px;
         justify-content: center;
@@ -24,26 +34,197 @@
         flex-direction: row;
     }
     #bodyDiv {
+        background-color: gray;
         border: 3px solid black;
+        border-radius: 5px;
         margin-left: auto;
-        margin-right: auto;
-        margin-top: 20px;
+        margin-right: 50px;
+        margin-top: 50px;
         padding: 10px;
-        width: 600px;
+        width: max-content;
+    }
+    #equation {
+        font-weight: normal;
+        margin: 0px;
+        padding: 0px;
+        text-align: right;
+    }
+    #flexDiv {
+        display: flex;
+        flex-direction: row;
     }
     #interfaceDiv {
+        background-color: white;
         border: 2px solid black;
-        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 10px;
+        padding: 15px;
+    }
+    #notesDiv {
+        background-color: lightgray;
+        border: 3px solid black;
+        border-radius: 5px;
+        margin-left: 50px;
+        margin-right: auto;
+        margin-top: 50px;
+        padding: 15px;
+        width: 600px;
+    }
+    #plus {
+        flex-grow: 1;
+    }
+    #plusDiv {
+        display: flex;
+        flex-direction: column;
+    }
+    #result {
+        margin: 0px;
+        margin-top: 10px;
+        text-align: right;
+        word-wrap: break-word;
+    }
+    #zero, #plus {
+        flex-grow: 2;
     }
 </style>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://unpkg.com/mathjs/lib/browser/math.js"></script>
 <script>
+    // Global Variables
+    var operation = "";
+    var lastButtonClicked = "";
+    // Functions
+    function changeRes(str) { // change innerHTML of #result
+        console.log("changeRes called");
+        $("#result").html(str);
+    }
+    function changeEq(str) { // change innerHTML of #equation
+        console.log("changeEq called");
+        $("#equation").html(str);
+    }
+    function doEvaluate() {
+        // masters: changeEq(), changeRes()
+        var res = $("#result").html();
+        var eq = $("#equation").html();
+        console.log("evaluating " + eq + res);
+        var ans = math.evaluate(eq+res);
+        var str = math.format(ans, {precision: 14});
+        console.log("ans is " + ans);
+        changeEq(eq+res+"=");
+        changeRes(str);
+    }
+</script>
+<script>
+$(document).ready(function() {
+    console.log(123456789*123456789);
+    // buttons onClick events
+    $(".button").click(function() {
+        var innerHTML = $(this).html();
+        console.log("clicked innerHTML: " + innerHTML);
+        if (innerHTML == "CE") {
+            if (lastButtonClicked == "CE") {
+                changeEq("&nbsp");
+            }
+            changeRes("0");
+            lastButtonClicked = "CE";
+        } else if (innerHTML == "DEL") {
+            if (lastButtonClicked == "number" || lastButtonClicked == "DEL" || lastButtonClicked == "negate") {
+                console.log("DEL called");
+                let str = $("#result").html();
+                console.log("str is " + str);
+                if (str.length == 1) {
+                    changeRes("0");
+                } else {
+                    let str = $("#result").html();
+                    str += "/10";
+                    let ans = math.evaluate(str);
+                    if (math.isNegative(ans)) {
+                        ans = math.ceil(ans);
+                    } else {
+                        ans = math.floor(ans);
+                    }
+                    changeRes(ans);
+                }
+                lastButtonClicked = "DEL";
+            }
+        } else if (innerHTML == "+/-") {
+            let str = $("#result").html();
+            str += "*-1"
+            ans = math.evaluate(str);
+            console.log("ans is " + ans);
+            changeRes(ans);
+            lastButtonClicked = "negate";
+        } else if (innerHTML == "/") {
+            let operation = innerHTML;
+            let eq = $("#equation").html();
+            let str = $("#result").html();
+            if (lastButtonClicked == "operator") {
+                let newEq = eq.slice(0,-1);
+                newEq += operation;
+                changeEq(newEq);
+            }
+            if (lastButtonClicked == "number" || lastButtonClicked == "negate") {
+                console.log("eq is " + eq);
+                if (eq == "&nbsp;" || eq == "") {
+                    // nothing
+                } else {
+                    doEvaluate();
+                }
+                str = $("#result").html();
+                str += operation;
+                changeEq(str);
+            }
+            lastButtonClicked = "operator";
+        } else if (innerHTML == "*") {
 
+        } else if (innerHTML == "-") {
+
+        } else if (innerHTML == "+") {
+
+        } else if (innerHTML == "=") {
+
+        } else { // if a number is clicked
+            let res = $("#result").html();
+            if (res == "0" || lastButtonClicked == "operator") { // if result is "0", change result to number
+                changeRes(innerHTML);
+            } else { // if result is not "0", append number to result
+                if (res.length != 16) { // only append if result is not yet 16 digits
+                    changeRes(res + innerHTML);
+                }
+            }
+            lastButtonClicked = "number";
+        }
+        // } else if (innerHTML == "0") {
+        //     changeRes(innerHTML);
+        // } else if (innerHTML == "1") {
+        //     changeRes(innerHTML);
+        // } else if (innerHTML == "2") {
+            
+        // } else if (innerHTML == "3") {
+            
+        // } else if (innerHTML == "4") {
+            
+        // } else if (innerHTML == "5") {
+            
+        // } else if (innerHTML == "6") {
+            
+        // } else if (innerHTML == "7") {
+            
+        // } else if (innerHTML == "8") {
+            
+        // } else if (innerHTML == "9") {
+            
+        // }
+    })
+})
 </script>
 </head>
-<body><div id="bodyDiv">
+<body>
+<div id="flexDiv">
+<div id="bodyDiv">
     <div id="interfaceDiv">
-        <h1 id="result">0</h1>
+        <h5 id="equation">&nbsp</h5>
+        <h3 id="result">0</h3>
     </div>
     <div id="buttonsDiv">
         <!-- CE DEL Negate / -->
@@ -68,7 +249,7 @@
             <div class="button">-</div>
         </div>
         <!-- 1 2 3 0 = + -->
-        <div class="rowDiv">
+        <div class="rowDiv" id="lastTwo">
             <!-- 1 2 3 0 = -->
             <div> 
                 <!-- 1 2 3 -->
@@ -79,15 +260,20 @@
                 </div>
                 <!-- 0 = -->
                 <div class="rowDiv">
-                    <div class="button">0</div>
+                    <div class="button" id="zero">0</div>
                     <div class="button">=</div>
                 </div>
             </div>
             <!-- + -->
-            <div>
-                <div class="button">+</div>
+            <div id="plusDiv">
+                <div class="button" id="plus">+</div>
             </div>
         </div>    
     </div>
-</div></body>
+</div> <!-- end bodyDiv -->
+<div id="notesDiv">
+    Notes
+</div> <!-- end notesDiv -->
+</div> <!-- end flexDiv -->
+</body>
 </html>
