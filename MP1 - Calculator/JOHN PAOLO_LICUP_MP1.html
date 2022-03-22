@@ -12,6 +12,14 @@
     body {
         background-color: lightblue;
     }
+    li {
+        margin-left: 15px;
+        margin-bottom: 5px;
+    }
+    p {
+        margin: 0px;
+        margin-bottom: 5px;
+    }
     .button {
         align-items: center;
         background-color: white;
@@ -23,7 +31,18 @@
         justify-content: center;
         margin: 2px;
         padding: 2px;
+        transition-duration: 0.2s;
         width: 50px;
+    }
+    .button:hover {
+        background-color: black;
+        color: white;
+    }
+    .button:active {
+        background-color: black;
+        box-shadow: 0 5px #666;
+        transform: translateY(4px);
+        transition-duration: 0.2s;
     }
     .colDiv {
         display: flex;
@@ -102,21 +121,28 @@
         console.log("changeEq called");
         $("#equation").html(str);
     }
-    function doEvaluate() {
+    function doEvaluate() { // evaluates equation and result
         // masters: changeEq(), changeRes()
         var res = $("#result").html();
         var eq = $("#equation").html();
         console.log("evaluating " + eq + res);
-        var ans = math.evaluate(eq+res);
-        var str = math.format(ans, {precision: 14});
+        var sliced = eq.slice(0,-1);
+        var ans = math.evaluate(eq + res);
+        console.log("typeof is " + typeof(ans));
         console.log("ans is " + ans);
-        changeEq(eq+res+"=");
+        var str = math.format(ans, {precision: 14});
+        console.log("str is " + str);
+        var slicedNumber = math.evaluate(sliced + "+0"); // converts string to value
+        var resNumber = math.evaluate(res + "+0"); // converts string to value
+        console.log("formatted sliced is " + math.format(slicedNumber, {precision: 7}));
+        var exp = "(" + math.format(slicedNumber, {precision: 7}) + ")" + eq.charAt(eq.length-1) + "(" + math.format(resNumber, {precision: 7}) + ")" + " = ";
+        console.log("exp is " + exp); 
+        changeEq(exp);
         changeRes(str);
     }
 </script>
 <script>
 $(document).ready(function() {
-    console.log(123456789*123456789);
     // buttons onClick events
     $(".button").click(function() {
         var innerHTML = $(this).html();
@@ -149,23 +175,28 @@ $(document).ready(function() {
             }
         } else if (innerHTML == "+/-") {
             let str = $("#result").html();
+            let eq = $("#equation").html();
             str += "*-1"
             ans = math.evaluate(str);
+            let formatted = math.format(ans, {precision: 14});
             console.log("ans is " + ans);
-            changeRes(ans);
+            changeRes(formatted);
+            if (eq.charAt(eq.length-2) == "=") {
+                changeEq(formatted);
+            }
             lastButtonClicked = "negate";
-        } else if (innerHTML == "/") {
+        } else if (innerHTML == "+" || innerHTML == "-" || innerHTML == "*" || innerHTML == "/") {
             let operation = innerHTML;
             let eq = $("#equation").html();
             let str = $("#result").html();
-            if (lastButtonClicked == "operator") {
+            if (lastButtonClicked == "operator" || lastButtonClicked == "CE") {
                 let newEq = eq.slice(0,-1);
                 newEq += operation;
                 changeEq(newEq);
             }
             if (lastButtonClicked == "number" || lastButtonClicked == "negate") {
                 console.log("eq is " + eq);
-                if (eq == "&nbsp;" || eq == "") {
+                if (eq == "&nbsp;" || eq == "" || eq.charAt(eq.length-1) == "=") {
                     // nothing
                 } else {
                     doEvaluate();
@@ -174,18 +205,28 @@ $(document).ready(function() {
                 str += operation;
                 changeEq(str);
             }
+            if (lastButtonClicked == "equal") {
+                str = $("#result").html();
+                str += operation;
+                changeEq(str);
+            }
             lastButtonClicked = "operator";
-        } else if (innerHTML == "*") {
-
-        } else if (innerHTML == "-") {
-
-        } else if (innerHTML == "+") {
-
         } else if (innerHTML == "=") {
-
+            let eq = $("#equation").html();
+            if (eq.charAt(eq.length-1) == "+" || eq.charAt(eq.length-1) == "-" || eq.charAt(eq.length-1) == "*" || eq.charAt(eq.length-1) == "/") {
+                if (eq == "&nbsp;" || eq == "") {
+                    // nothing
+                } else {
+                    doEvaluate();
+                }
+                lastButtonClicked = "equal";
+            }
         } else { // if a number is clicked
             let res = $("#result").html();
-            if (res == "0" || lastButtonClicked == "operator") { // if result is "0", change result to number
+            if (res == "0" || lastButtonClicked == "operator" || lastButtonClicked == "equal") { // if result is "0", change result to number
+                if (res == "0" || lastButtonClicked == "equal") {
+                    changeEq("&nbsp");
+                }
                 changeRes(innerHTML);
             } else { // if result is not "0", append number to result
                 if (res.length != 16) { // only append if result is not yet 16 digits
@@ -194,27 +235,6 @@ $(document).ready(function() {
             }
             lastButtonClicked = "number";
         }
-        // } else if (innerHTML == "0") {
-        //     changeRes(innerHTML);
-        // } else if (innerHTML == "1") {
-        //     changeRes(innerHTML);
-        // } else if (innerHTML == "2") {
-            
-        // } else if (innerHTML == "3") {
-            
-        // } else if (innerHTML == "4") {
-            
-        // } else if (innerHTML == "5") {
-            
-        // } else if (innerHTML == "6") {
-            
-        // } else if (innerHTML == "7") {
-            
-        // } else if (innerHTML == "8") {
-            
-        // } else if (innerHTML == "9") {
-            
-        // }
     })
 })
 </script>
@@ -272,7 +292,15 @@ $(document).ready(function() {
     </div>
 </div> <!-- end bodyDiv -->
 <div id="notesDiv">
-    Notes
+    <p>Notes</p>
+    <li>Uses <a href="https://mathjs.org/">mathjs</a> for computing.</li>
+    <li>Entries are limited to 16 characters.</li>
+    <li>Each term in the equation and result are formatted in 16 character precision, but the evaluation itself computes the numbers accurately in the backend.</li>
+    <li><b>CE</b> clears the current entry (result). Pressing this two times consecutively clears both equation and result.</li>
+    <li><b>DEL</b> deletes the last digit typed or when result is negated.</li>
+    <li>The negate <b>+/-</b> button switches the sign of the current entry/result.</li>
+    <li>Pressing any operator while an equation is active changes the last operator pressed.</li>
+    <li>Pressing any operator (while an equation is active and another entry is typed in) evaluates the current equation and attaches the operator to it.</li>
 </div> <!-- end notesDiv -->
 </div> <!-- end flexDiv -->
 </body>
